@@ -48,10 +48,10 @@ int net_init(void) {
     if (http_template < 0) return -1;
 
     /* Set timeouts so requests don't block forever */
-    sceHttpSetConnectTimeout(http_template, 5 * 1000 * 1000);  /* 5 sec connect */
-    sceHttpSetRecvTimeout(http_template, 10 * 1000 * 1000);     /* 10 sec read */
-    sceHttpSetSendTimeout(http_template, 5 * 1000 * 1000);      /* 5 sec send */
-    sceHttpSetResolveTimeout(http_template, 5 * 1000 * 1000);   /* 5 sec DNS */
+    sceHttpSetConnectTimeOut(http_template, 5 * 1000 * 1000);  /* 5 sec connect */
+    sceHttpSetRecvTimeOut(http_template, 10 * 1000 * 1000);     /* 10 sec read */
+    sceHttpSetSendTimeOut(http_template, 5 * 1000 * 1000);      /* 5 sec send */
+    sceHttpSetResolveTimeOut(http_template, 5 * 1000 * 1000);   /* 5 sec DNS */
 
     return 0;
 }
