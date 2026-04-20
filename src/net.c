@@ -10,6 +10,7 @@
 
 #include "net.h"
 #include "config.h"
+#include "config_runtime.h"
 
 #define NET_HEAP_SIZE  (1 * 1024 * 1024)
 #define HTTP_HEAP_SIZE (1 * 1024 * 1024)
@@ -79,7 +80,7 @@ char *net_request(const char *method, const char *url, const char *body, int *ou
 
     /* Set auth header */
     char auth_header[1024];
-    snprintf(auth_header, sizeof(auth_header), "Bearer %s", HA_TOKEN);
+    snprintf(auth_header, sizeof(auth_header), "Bearer %s", g_config.token);
     sceHttpAddRequestHeader(req, "Authorization", auth_header, SCE_HTTP_HEADER_OVERWRITE);
     sceHttpAddRequestHeader(req, "Content-Type", "application/json", SCE_HTTP_HEADER_OVERWRITE);
 

@@ -22,6 +22,10 @@ void ui_draw_color_overlay(ha_entity_t *entity, int overlay_sel);
    remote_sel: 0-8 button index */
 void ui_draw_remote_overlay(ha_entity_t *entity, int remote_sel);
 
+/* Draw a full-screen error when the runtime config file is missing or invalid.
+   `reason` is a short human-readable message (e.g. "'host' is not set"). */
+void ui_draw_config_error(const char *reason, const char *config_path, int template_created);
+
 /* Get the card Y position for a given index (accounting for scroll) */
 int ui_card_y(int index, int scroll_offset);
 

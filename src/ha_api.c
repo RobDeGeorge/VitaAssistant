@@ -6,12 +6,13 @@
 #include "ha_api.h"
 #include "net.h"
 #include "config.h"
+#include "config_runtime.h"
 
 int ha_fetch_entities(const char *domain, ha_entity_list_t *list) {
     list->count = 0;
 
     char url[256];
-    snprintf(url, sizeof(url), "%s/api/states", HA_BASE_URL);
+    snprintf(url, sizeof(url), "%s/api/states", g_config.base_url);
 
     char *resp = net_request("GET", url, NULL, NULL);
     if (!resp) return -1;
@@ -116,7 +117,7 @@ int ha_fetch_entities(const char *domain, ha_entity_list_t *list) {
 
 static int ha_call_service(const char *domain, const char *service, const char *entity_id, const char *extra_json) {
     char url[256];
-    snprintf(url, sizeof(url), "%s/api/services/%s/%s", HA_BASE_URL, domain, service);
+    snprintf(url, sizeof(url), "%s/api/services/%s/%s", g_config.base_url, domain, service);
 
     char body[512];
     if (extra_json) {
@@ -229,7 +230,7 @@ int ha_media_select_source(const char *entity_id, const char *source) {
 
 int ha_remote_send_command(const char *entity_id, const char *command) {
     char url[256];
-    snprintf(url, sizeof(url), "%s/api/services/remote/send_command", HA_BASE_URL);
+    snprintf(url, sizeof(url), "%s/api/services/remote/send_command", g_config.base_url);
 
     char body[256];
     snprintf(body, sizeof(body), "{\"entity_id\":\"%s\",\"command\":\"%s\"}", entity_id, command);

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "config_runtime.h"
 #include "net.h"
 #include "ha_api.h"
 #include "ui.h"
@@ -25,8 +26,6 @@ static int overlay_sel = 0;
 /* Remote overlay state */
 static int remote_overlay = 0;
 static int remote_sel = 4;
-
-/* FIRE_TV_MEDIA and FIRE_TV_REMOTE defined in config_secret.h */
 
 /* Analog stick deadzone and rate limiting */
 #define STICK_DEADZONE 50
@@ -225,45 +224,45 @@ static void handle_color_overlay_input(unsigned int pressed, SceCtrlData *pad, h
 static void do_remote_action(int btn) {
     switch (btn) {
         case 0: /* Vol+ */
-            ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_UP");
+            ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_UP");
             snprintf(status_msg, sizeof(status_msg), "Volume Up");
             break;
         case 1: /* Up */
-            ha_remote_send_command(FIRE_TV_REMOTE, "UP");
+            ha_remote_send_command(g_config.fire_tv_remote, "UP");
             break;
         case 2: /* Power */
-            ha_remote_send_command(FIRE_TV_REMOTE, "POWER");
+            ha_remote_send_command(g_config.fire_tv_remote, "POWER");
             snprintf(status_msg, sizeof(status_msg), "Power");
             break;
         case 3: /* Left */
-            ha_remote_send_command(FIRE_TV_REMOTE, "LEFT");
+            ha_remote_send_command(g_config.fire_tv_remote, "LEFT");
             break;
         case 4: /* OK/Select */
-            ha_remote_send_command(FIRE_TV_REMOTE, "CENTER");
+            ha_remote_send_command(g_config.fire_tv_remote, "CENTER");
             break;
         case 5: /* Right */
-            ha_remote_send_command(FIRE_TV_REMOTE, "RIGHT");
+            ha_remote_send_command(g_config.fire_tv_remote, "RIGHT");
             break;
         case 6: /* Vol- */
-            ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_DOWN");
+            ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_DOWN");
             snprintf(status_msg, sizeof(status_msg), "Volume Down");
             break;
         case 7: /* Down */
-            ha_remote_send_command(FIRE_TV_REMOTE, "DOWN");
+            ha_remote_send_command(g_config.fire_tv_remote, "DOWN");
             break;
         case 8: /* Mute */
-            ha_remote_send_command(FIRE_TV_REMOTE, "MUTE");
+            ha_remote_send_command(g_config.fire_tv_remote, "MUTE");
             snprintf(status_msg, sizeof(status_msg), "Mute");
             break;
         case 9: /* Play/Pause */
-            ha_media_play_pause(FIRE_TV_MEDIA);
+            ha_media_play_pause(g_config.fire_tv_media);
             snprintf(status_msg, sizeof(status_msg), "Play/Pause");
             break;
         case 10: /* Back */
-            ha_remote_send_command(FIRE_TV_REMOTE, "BACK");
+            ha_remote_send_command(g_config.fire_tv_remote, "BACK");
             break;
         case 11: /* Home */
-            ha_remote_send_command(FIRE_TV_REMOTE, "HOME");
+            ha_remote_send_command(g_config.fire_tv_remote, "HOME");
             break;
     }
 }
@@ -297,10 +296,10 @@ static void handle_remote_overlay_input(unsigned int pressed, SceCtrlData *pad) 
         analog_timer++;
         if (analog_timer >= ANALOG_DELAY) {
             analog_timer = 0;
-            if (sy < 0) ha_remote_send_command(FIRE_TV_REMOTE, "UP");
-            if (sy > 0) ha_remote_send_command(FIRE_TV_REMOTE, "DOWN");
-            if (sx < 0) ha_remote_send_command(FIRE_TV_REMOTE, "LEFT");
-            if (sx > 0) ha_remote_send_command(FIRE_TV_REMOTE, "RIGHT");
+            if (sy < 0) ha_remote_send_command(g_config.fire_tv_remote, "UP");
+            if (sy > 0) ha_remote_send_command(g_config.fire_tv_remote, "DOWN");
+            if (sx < 0) ha_remote_send_command(g_config.fire_tv_remote, "LEFT");
+            if (sx > 0) ha_remote_send_command(g_config.fire_tv_remote, "RIGHT");
         }
     } else {
         analog_timer = ANALOG_DELAY;
@@ -313,20 +312,20 @@ static void handle_remote_overlay_input(unsigned int pressed, SceCtrlData *pad) 
 
     /* Square: OK/Select shortcut */
     if (pressed & SCE_CTRL_SQUARE) {
-        ha_remote_send_command(FIRE_TV_REMOTE, "CENTER");
+        ha_remote_send_command(g_config.fire_tv_remote, "CENTER");
     }
 
     /* L trigger: volume down (repeats while held) */
     static int vol_repeat_timer = 0;
     if (pad->buttons & SCE_CTRL_LTRIGGER) {
         if (pressed & SCE_CTRL_LTRIGGER) {
-            ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_DOWN");
+            ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_DOWN");
             snprintf(status_msg, sizeof(status_msg), "Volume Down");
             vol_repeat_timer = 0;
         } else {
             vol_repeat_timer++;
             if (vol_repeat_timer > 15 && vol_repeat_timer % 8 == 0) {
-                ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_DOWN");
+                ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_DOWN");
                 snprintf(status_msg, sizeof(status_msg), "Volume Down");
             }
         }
@@ -335,13 +334,13 @@ static void handle_remote_overlay_input(unsigned int pressed, SceCtrlData *pad) 
     /* R trigger: volume up (repeats while held) */
     if (pad->buttons & SCE_CTRL_RTRIGGER) {
         if (pressed & SCE_CTRL_RTRIGGER) {
-            ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_UP");
+            ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_UP");
             snprintf(status_msg, sizeof(status_msg), "Volume Up");
             vol_repeat_timer = 0;
         } else {
             vol_repeat_timer++;
             if (vol_repeat_timer > 15 && vol_repeat_timer % 8 == 0) {
-                ha_remote_send_command(FIRE_TV_REMOTE, "VOLUME_UP");
+                ha_remote_send_command(g_config.fire_tv_remote, "VOLUME_UP");
                 snprintf(status_msg, sizeof(status_msg), "Volume Up");
             }
         }
@@ -353,7 +352,7 @@ static void handle_remote_overlay_input(unsigned int pressed, SceCtrlData *pad) 
 
     /* Circle: back button */
     if (pressed & SCE_CTRL_CIRCLE) {
-        ha_remote_send_command(FIRE_TV_REMOTE, "BACK");
+        ha_remote_send_command(g_config.fire_tv_remote, "BACK");
     }
 
     /* Triangle: close overlay */
@@ -375,6 +374,28 @@ int main(void) {
     if (ui_init() < 0) {
         sceKernelExitProcess(0);
         return 1;
+    }
+
+    /* Load runtime config. If missing, write a commented template to
+       ux0:data/VitaAssistant/config.txt and show the user an error screen
+       telling them how to edit it. */
+    int template_created = config_write_template_if_missing(CONFIG_PATH);
+    char cfg_err[128] = {0};
+    if (template_created == 1 || config_load(CONFIG_PATH, cfg_err, sizeof(cfg_err)) < 0) {
+        unsigned int old_buttons_err = 0;
+        while (1) {
+            SceCtrlData pad;
+            sceCtrlPeekBufferPositive(0, &pad, 1);
+            unsigned int pressed = pad.buttons & ~old_buttons_err;
+            old_buttons_err = pad.buttons;
+
+            ui_draw_config_error(cfg_err, CONFIG_PATH, template_created == 1);
+
+            if (pressed & SCE_CTRL_START) break;
+        }
+        ui_cleanup();
+        sceKernelExitProcess(0);
+        return 0;
     }
 
     /* Draw a loading frame so the screen isn't blank during network init */
@@ -426,10 +447,10 @@ int main(void) {
 
             ha_entity_t remote_entity;
             memset(&remote_entity, 0, sizeof(remote_entity));
-            strncpy(remote_entity.entity_id, FIRE_TV_MEDIA, sizeof(remote_entity.entity_id) - 1);
+            strncpy(remote_entity.entity_id, g_config.fire_tv_media, sizeof(remote_entity.entity_id) - 1);
             strncpy(remote_entity.friendly_name, "Fire TV", sizeof(remote_entity.friendly_name) - 1);
             for (int i = 0; i < devices.count; i++) {
-                if (strcmp(devices.items[i].entity_id, FIRE_TV_MEDIA) == 0) {
+                if (strcmp(devices.items[i].entity_id, g_config.fire_tv_media) == 0) {
                     remote_entity = devices.items[i];
                     break;
                 }

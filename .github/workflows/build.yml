@@ -19,9 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Provide placeholder config
-        run: cp src/config_secret.h.example src/config_secret.h
-
       - name: Configure
         run: cmake -S . -B build
 

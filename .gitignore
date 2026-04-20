@@ -2,6 +2,3 @@ build/
 *.vpk
 *.self
 *.velf
-
-# Secret config — never commit
-src/config_secret.h

@@ -17,44 +17,70 @@ A Home Assistant client for the PS Vita. Control your lights, climate, scenes, s
 
 ## Requirements
 
-- A PS Vita with HENkaku/Enso
-- [VitaSDK](https://vitasdk.org/) installed
+- A PS Vita with HENkaku/Enso and [VitaShell](https://github.com/TheOfficialFloW/VitaShell)
 - A Home Assistant instance on your local network
 - A Home Assistant [long-lived access token](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-tokens)
 
-## Download
+## Install
 
-Prebuilt `.vpk` files are produced automatically by GitHub Actions:
+1. Download the latest `VitaAssistant.vpk` from the [Releases page](https://github.com/RobDeGeorge/VitaAssistant/releases).
+2. Transfer it to your Vita (VitaShell FTP, USB, or SD card).
+3. In VitaShell, navigate to the `.vpk` and press **X** to install.
+4. Launch VitaAssistant once.
+   - It will create a template config at `ux0:data/VitaAssistant/config.txt` and show an instruction screen. Press **Start** to exit.
+5. Edit `ux0:data/VitaAssistant/config.txt` with your Home Assistant details (see [Configuration](#configuration)).
+6. Relaunch VitaAssistant. It should connect and populate the entity list.
 
-- **Stable releases:** grab the latest `VitaAssistant.vpk` from the [Releases page](https://github.com/RobDeGeorge/VitaAssistant/releases).
-- **Latest commit:** download the `VitaAssistant-vpk` artifact from any successful run on the [Actions page](https://github.com/RobDeGeorge/VitaAssistant/actions/workflows/build.yml) (GitHub login required; artifacts expire after 90 days).
+> The VPK is identical for everyone — no rebuild needed per user. All per-user settings live in the config file.
 
-> **Heads up:** the prebuilt VPK ships with placeholder config and will not connect to a real Home Assistant instance out of the box. You'll need to clone and rebuild with your own `src/config_secret.h` (see [Setup](#setup)).
+## Configuration
 
-## Setup
+The config file lives at `ux0:data/VitaAssistant/config.txt` and uses simple `key=value` lines. Lines starting with `#` are ignored.
 
-1. Clone the repo:
-   ```
-   git clone https://github.com/yourusername/VitaAssistant.git
-   cd VitaAssistant
-   ```
+```
+host=192.168.1.100
+port=8123
+token=paste-your-long-lived-token-here
 
-2. Copy the example config and fill in your details:
-   ```
-   cp src/config_secret.h.example src/config_secret.h
-   ```
-   Edit `src/config_secret.h` with your Home Assistant IP, port, access token, and entity IDs.
+# Optional — only needed if you want the Fire TV remote overlay
+fire_tv_media=media_player.your_fire_tv
+fire_tv_remote=remote.your_fire_tv
+```
 
-3. Build:
-   ```
-   mkdir build && cd build
-   cmake ..
-   make
-   ```
+| Key | Required | Description |
+|-----|----------|-------------|
+| `host` | yes | Home Assistant IP address or hostname on your LAN |
+| `port` | no (default `8123`) | Home Assistant port |
+| `token` | yes | Long-lived access token (Profile → Security in HA) |
+| `fire_tv_media` | no | `media_player.*` entity ID for the Fire TV remote overlay |
+| `fire_tv_remote` | no | `remote.*` entity ID for the Fire TV remote overlay |
 
-4. Install the generated `VitaAssistant.vpk` on your Vita via VitaShell.
+### Editing on the Vita
 
-5. Make sure your Vita is connected to the same WiFi network as your Home Assistant instance.
+VitaShell has a built-in text editor — no PC needed after install:
+
+1. Open VitaShell, navigate to `ux0:data/VitaAssistant/config.txt`.
+2. Press **Triangle** → **Open decrypted**.
+3. Edit, press **Start** to save, and relaunch VitaAssistant.
+
+### Editing from a PC
+
+Copy the file off the Vita via FTP or USB, edit in any text editor, copy it back.
+
+## Building from source
+
+Only needed if you want to modify VitaAssistant itself — regular users just download the prebuilt VPK above.
+
+Requires [VitaSDK](https://vitasdk.org/).
+
+```
+git clone https://github.com/RobDeGeorge/VitaAssistant.git
+cd VitaAssistant
+cmake -S . -B build
+cmake --build build
+```
+
+The `.vpk` will be at `build/VitaAssistant.vpk`.
 
 ## Controls
 

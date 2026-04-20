@@ -395,3 +395,53 @@ void ui_draw(int current_tab, ha_entity_list_t *lists[], int num_lists,
     vita2d_end_drawing();
     vita2d_swap_buffers();
 }
+
+void ui_draw_config_error(const char *reason, const char *config_path, int template_created) {
+    vita2d_start_drawing();
+    vita2d_clear_screen();
+
+    vita2d_draw_rectangle(0, 0, SCREEN_W, HEADER_H, COLOR_HEADER);
+    vita2d_pgf_draw_text(font, 20, 33, COLOR_RED, 1.2f, "Config required");
+
+    int y = HEADER_H + 40;
+
+    if (template_created) {
+        vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT, 1.0f,
+            "A template config file has been created for you.");
+        y += 30;
+        vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT, 1.0f,
+            "Edit it with your Home Assistant details, then relaunch.");
+    } else {
+        vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT, 1.0f,
+            "VitaAssistant could not load its config:");
+        y += 30;
+        if (reason && reason[0]) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), "  %s", reason);
+            vita2d_pgf_draw_text(font, 30, y, COLOR_WARM, 1.0f, buf);
+        }
+    }
+
+    y += 60;
+    vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT_DIM, 0.9f, "Config file:");
+    y += 26;
+    vita2d_pgf_draw_text(font, 30, y, COLOR_ACCENT, 0.95f,
+        config_path ? config_path : "ux0:data/VitaAssistant/config.txt");
+
+    y += 50;
+    vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT_DIM, 0.9f,
+        "Edit the file on the Vita with VitaShell:");
+    y += 26;
+    vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT_DIM, 0.9f,
+        "  navigate to the file, press Triangle, Open decrypted.");
+
+    y += 50;
+    vita2d_pgf_draw_text(font, 30, y, COLOR_TEXT_DIM, 0.9f,
+        "Required keys: host, token.   Optional: port, fire_tv_media, fire_tv_remote.");
+
+    vita2d_pgf_draw_text(font, SCREEN_W / 2 - 80, SCREEN_H - 30, COLOR_TEXT, 1.0f,
+        "Press Start to exit");
+
+    vita2d_end_drawing();
+    vita2d_swap_buffers();
+}

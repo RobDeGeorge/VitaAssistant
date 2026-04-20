@@ -1,10 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "config_secret.h"
-
-#define HA_BASE_URL "http://" HA_HOST ":8123"
-
 /* Vita screen dimensions */
 #define SCREEN_W 960
 #define SCREEN_H 544

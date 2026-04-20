@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME}
   src/ui.c
   src/ha_api.c
   src/cJSON.c
+  src/config_runtime.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
