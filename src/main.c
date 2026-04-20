@@ -382,6 +382,13 @@ int main(void) {
     int template_created = config_write_template_if_missing(CONFIG_PATH);
     char cfg_err[128] = {0};
     if (template_created == 1 || config_load(CONFIG_PATH, cfg_err, sizeof(cfg_err)) < 0) {
+        /* Prime the framebuffer so the first visible frame is the error screen,
+           not leftover garbage from vita2d_init. */
+        vita2d_start_drawing();
+        vita2d_clear_screen();
+        vita2d_end_drawing();
+        vita2d_swap_buffers();
+
         unsigned int old_buttons_err = 0;
         while (1) {
             SceCtrlData pad;
@@ -394,6 +401,7 @@ int main(void) {
             if (pressed & SCE_CTRL_START) break;
         }
         ui_cleanup();
+        sceAppUtilShutdown();
         sceKernelExitProcess(0);
         return 0;
     }
@@ -647,6 +655,7 @@ int main(void) {
 
     net_cleanup();
     ui_cleanup();
+    sceAppUtilShutdown();
     sceKernelExitProcess(0);
     return 0;
 }

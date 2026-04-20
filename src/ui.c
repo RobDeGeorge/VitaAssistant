@@ -23,6 +23,7 @@ int ui_init(void) {
 }
 
 void ui_cleanup(void) {
+    vita2d_wait_rendering_done();
     if (font) vita2d_free_pgf(font);
     vita2d_fini();
 }
