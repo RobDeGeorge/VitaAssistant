@@ -1,5 +1,8 @@
 # VitaAssistant
 
+[![Build VPK](https://github.com/RobDeGeorge/VitaAssistant/actions/workflows/build.yml/badge.svg)](https://github.com/RobDeGeorge/VitaAssistant/actions/workflows/build.yml)
+[![Latest Release](https://img.shields.io/github/v/release/RobDeGeorge/VitaAssistant?include_prereleases&sort=semver)](https://github.com/RobDeGeorge/VitaAssistant/releases/latest)
+
 A Home Assistant client for the PS Vita. Control your lights, climate, scenes, switches, and media players directly from your Vita.
 
 ## Features
@@ -18,6 +21,15 @@ A Home Assistant client for the PS Vita. Control your lights, climate, scenes, s
 - [VitaSDK](https://vitasdk.org/) installed
 - A Home Assistant instance on your local network
 - A Home Assistant [long-lived access token](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-tokens)
+
+## Download
+
+Prebuilt `.vpk` files are produced automatically by GitHub Actions:
+
+- **Stable releases:** grab the latest `VitaAssistant.vpk` from the [Releases page](https://github.com/RobDeGeorge/VitaAssistant/releases).
+- **Latest commit:** download the `VitaAssistant-vpk` artifact from any successful run on the [Actions page](https://github.com/RobDeGeorge/VitaAssistant/actions/workflows/build.yml) (GitHub login required; artifacts expire after 90 days).
+
+> **Heads up:** the prebuilt VPK ships with placeholder config and will not connect to a real Home Assistant instance out of the box. You'll need to clone and rebuild with your own `src/config_secret.h` (see [Setup](#setup)).
 
 ## Setup
 
