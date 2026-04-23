@@ -14,6 +14,7 @@ A Home Assistant client for the PS Vita. Control your lights, climate, scenes, s
 - Activate scenes
 - Fire TV remote control overlay
 - Touchscreen and button/analog stick input
+- Auto-refresh every ~3 seconds — changes made elsewhere (phone, dashboard) show up on the Vita shortly after
 
 ## Requirements
 
@@ -84,18 +85,58 @@ The `.vpk` will be at `build/VitaAssistant.vpk`.
 
 ## Controls
 
+### Main view
+
 | Input | Action |
 |-------|--------|
 | L/R Triggers | Switch tabs |
 | D-pad Up/Down | Navigate entities |
-| D-pad Left/Right | Adjust brightness / temperature |
-| Left Stick | Fine brightness adjust |
-| X | Toggle / Activate |
-| Triangle | Color picker (RGB lights) / Remote (media players) |
-| Circle | Cycle sub-selection on lights |
+| D-pad Left/Right | Adjust brightness (lights) / target temperature (climate) |
+| Left Stick Left/Right | Fine brightness adjust on a light |
+| X | Toggle light/switch, activate scene, play/pause media |
+| Triangle | Color picker (RGB lights) / Fire TV remote (media players) |
+| Circle | Cycle sub-selection on lights (card → toggle → slider) |
 | Select | Manual refresh |
 | Start | Exit |
-| Touch | Tap tabs or entities |
+| Touch | Tap a tab to switch; tap the right side of a card to toggle/activate |
+
+### Color picker overlay (Triangle on an RGB light)
+
+| Input | Action |
+|-------|--------|
+| D-pad Up/Down | Switch between Hue / Saturation / Brightness |
+| D-pad Left/Right | Coarse adjust |
+| Left Stick Left/Right | Fine adjust |
+| X | Apply color to the light |
+| Circle or Triangle | Close overlay |
+
+### Fire TV remote overlay (Triangle on a `media_player`)
+
+| Input | Action |
+|-------|--------|
+| D-pad | Navigate button grid |
+| Left Stick | Send directional commands to Fire TV |
+| X | Press the highlighted button |
+| Square | OK / Select shortcut |
+| L Trigger | Volume down (hold to repeat) |
+| R Trigger | Volume up (hold to repeat) |
+| Circle | Back |
+| Triangle | Close overlay |
+
+## Troubleshooting
+
+The status line in the top-right of the header shows what the app is doing. Common messages:
+
+| Message | Meaning |
+|---------|---------|
+| `HTTP 401 — check token in config` | Token is missing, wrong, or has been revoked. Regenerate in HA and update `config.txt`. |
+| `HTTP 403 — check token in config` | Token is valid but doesn't have permission. Make sure it's a long-lived access token under your user. |
+| `HTTP 404 …` | `host`/`port` is reachable but the `/api/` path isn't — most often a reverse-proxy config that doesn't forward the API. |
+| `HTTP 5xx …` | Home Assistant itself is erroring — check HA's log. |
+| `Network error — check WiFi/host` | Couldn't reach HA at all — wrong IP, Vita not on WiFi, or HA down. Press **Select** to retry. |
+| `Config required` (full-screen) | `config.txt` is missing or invalid. A template is created automatically on first launch at `ux0:data/VitaAssistant/config.txt`. |
+
+> Auto-refresh pauses while you're actively adjusting a brightness slider, so your in-progress value won't snap back mid-dim.
 
 ## License
 
