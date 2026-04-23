@@ -23,8 +23,16 @@ typedef struct {
     int count;
 } ha_entity_list_t;
 
-/* Fetch all entities of a given domain (e.g. "light", "climate", "scene", "counter", "sensor") */
-int ha_fetch_entities(const char *domain, ha_entity_list_t *list);
+/* Fetch all Home Assistant states in a single GET and bucket them into the
+   provided lists. Pass NULL for any list you don't care about. `home_list`
+   receives counters plus filtered sensors; `devices` receives switches plus
+   media_players. Returns 0 on success, -1 on transport/HTTP failure (inspect
+   net_last_status for the HTTP code). */
+int ha_fetch_all_states(ha_entity_list_t *home_list,
+                        ha_entity_list_t *lights,
+                        ha_entity_list_t *climate,
+                        ha_entity_list_t *scenes,
+                        ha_entity_list_t *devices);
 
 /* Toggle a light or switch */
 int ha_toggle(const char *entity_id);

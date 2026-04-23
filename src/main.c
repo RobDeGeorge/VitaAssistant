@@ -42,44 +42,34 @@ static ha_entity_list_t devices;
 #define NUM_LISTS 5
 static ha_entity_list_t *all_lists[NUM_LISTS];
 
-static int refresh_interval = 3600; /* ~60 sec, use Select for manual refresh */
+static int refresh_interval = 180; /* ~3 sec at 60fps — keeps UI in sync with changes made elsewhere (phone, dashboard) */
 static int frame_counter = 0;
 
 /* Brightness send rate limiting — don't send API call every frame */
 static int brightness_send_timer = 0;
 #define BRIGHTNESS_SEND_DELAY 10
 
+/* Toggle debounce — prevents rapid spam from racing HA's state machine and
+   inverting the on/off visual. */
+static int action_debounce = 0;
+#define ACTION_DEBOUNCE_FRAMES 20 /* ~333ms at 60fps */
+
 static void fetch_all(void) {
     snprintf(status_msg, sizeof(status_msg), "Refreshing...");
 
-    ha_entity_list_t counters, sensors;
-    ha_fetch_entities("counter", &counters);
-    ha_fetch_entities("sensor", &sensors);
-
-    home_list.count = 0;
-    for (int i = 0; i < counters.count && home_list.count < MAX_ENTITIES; i++)
-        home_list.items[home_list.count++] = counters.items[i];
-    for (int i = 0; i < sensors.count && home_list.count < MAX_ENTITIES; i++) {
-        if (strstr(sensors.items[i].entity_id, "backup") ||
-            strstr(sensors.items[i].entity_id, "sun_next") ||
-            strstr(sensors.items[i].entity_id, "last_boot"))
-            continue;
-        home_list.items[home_list.count++] = sensors.items[i];
+    if (ha_fetch_all_states(&home_list, &lights, &climate, &scenes, &devices) < 0) {
+        if (net_last_status == 401 || net_last_status == 403) {
+            snprintf(status_msg, sizeof(status_msg),
+                     "HTTP %d — check token in config", net_last_status);
+        } else if (net_last_status > 0) {
+            snprintf(status_msg, sizeof(status_msg),
+                     "HTTP %d from Home Assistant", net_last_status);
+        } else {
+            snprintf(status_msg, sizeof(status_msg),
+                     "Network error — check WiFi/host");
+        }
+        return;
     }
-
-    ha_fetch_entities("light", &lights);
-    ha_fetch_entities("climate", &climate);
-    ha_fetch_entities("scene", &scenes);
-
-    ha_entity_list_t switches, media;
-    ha_fetch_entities("switch", &switches);
-    ha_fetch_entities("media_player", &media);
-
-    devices.count = 0;
-    for (int i = 0; i < switches.count && devices.count < MAX_ENTITIES; i++)
-        devices.items[devices.count++] = switches.items[i];
-    for (int i = 0; i < media.count && devices.count < MAX_ENTITIES; i++)
-        devices.items[devices.count++] = media.items[i];
 
     snprintf(status_msg, sizeof(status_msg), "H:%d L:%d C:%d S:%d D:%d",
              home_list.count, lights.count, climate.count, scenes.count, devices.count);
@@ -103,6 +93,7 @@ static void clamp_cursor(void) {
 }
 
 static void do_action_on_cursor(void) {
+    if (action_debounce > 0) return;
     ha_entity_list_t *list = current_list();
     if (cursor_idx < 0 || cursor_idx >= list->count) return;
     ha_entity_t *e = &list->items[cursor_idx];
@@ -110,18 +101,25 @@ static void do_action_on_cursor(void) {
     if (strcmp(e->domain, "scene") == 0) {
         snprintf(status_msg, sizeof(status_msg), "Activating %s...", e->friendly_name);
         ha_activate_scene(e->entity_id);
-        fetch_all();
     } else if (strcmp(e->domain, "light") == 0 || strcmp(e->domain, "switch") == 0) {
-        snprintf(status_msg, sizeof(status_msg), "Toggling %s...", e->friendly_name);
+        /* Optimistically flip local state so the UI reflects user intent
+           immediately. The auto-refresh will reconcile with HA shortly — this
+           avoids the race where fetch_all() ran before HA had transitioned. */
+        int was_on = (strcmp(e->state, "on") == 0);
+        strncpy(e->state, was_on ? "off" : "on", sizeof(e->state) - 1);
+        e->state[sizeof(e->state) - 1] = '\0';
+        snprintf(status_msg, sizeof(status_msg), "%s %s",
+                 was_on ? "Turning off" : "Turning on", e->friendly_name);
         ha_toggle(e->entity_id);
-        fetch_all();
     } else if (strcmp(e->domain, "counter") == 0 || strcmp(e->domain, "sensor") == 0) {
-        /* Info only */
+        return; /* info only, no debounce needed */
     } else {
         snprintf(status_msg, sizeof(status_msg), "Toggling %s...", e->friendly_name);
         ha_toggle(e->entity_id);
-        fetch_all();
     }
+
+    action_debounce = ACTION_DEBOUNCE_FRAMES;
+    frame_counter = 0; /* give HA a full interval to settle before we refetch */
 }
 
 static ha_entity_t *get_cursor_entity(void) {
@@ -433,6 +431,8 @@ int main(void) {
         unsigned int pressed = pad.buttons & ~old_buttons;
         old_buttons = pad.buttons;
 
+        if (action_debounce > 0) action_debounce--;
+
         ha_entity_t *cur_entity = get_cursor_entity();
 
         /* Color overlay */
@@ -639,11 +639,16 @@ int main(void) {
         }
         touch_was_down = (touch.reportNum > 0);
 
-        /* Auto refresh */
+        /* Auto refresh — but defer if the user is actively adjusting a
+           brightness slider (pending send) or holding the stick, otherwise
+           fetch_all() would snap their in-progress value back to HA's. */
         frame_counter++;
         if (frame_counter >= refresh_interval) {
-            frame_counter = 0;
-            fetch_all();
+            int adjusting = (brightness_send_timer > 0) || stick_active(pad.lx, pad.ly);
+            if (!adjusting) {
+                frame_counter = 0;
+                fetch_all();
+            }
         }
 
         /* Start = exit */

@@ -18,6 +18,8 @@
 
 static int http_template = -1;
 
+int net_last_status = 0;
+
 int net_wait_connected(void) {
     /* Wait up to 10 seconds for WiFi to be connected */
     for (int i = 0; i < 100; i++) {
@@ -65,7 +67,10 @@ void net_cleanup(void) {
     sceNetTerm();
 }
 
-char *net_request(const char *method, const char *url, const char *body, int *out_len) {
+char *net_request(const char *method, const char *url, const char *body, int *out_status) {
+    net_last_status = 0;
+    if (out_status) *out_status = 0;
+
     int conn = sceHttpCreateConnectionWithURL(http_template, url, SCE_FALSE);
     if (conn < 0) return NULL;
 
@@ -100,6 +105,8 @@ char *net_request(const char *method, const char *url, const char *body, int *ou
     /* Read response */
     int status_code = 0;
     sceHttpGetStatusCode(req, &status_code);
+    net_last_status = status_code;
+    if (out_status) *out_status = status_code;
 
     /* Read body in chunks */
     size_t total = 0;
@@ -126,10 +133,17 @@ char *net_request(const char *method, const char *url, const char *body, int *ou
 
     if (result) {
         result[total] = '\0';
-        if (out_len) *out_len = total;
     }
 
     sceHttpDeleteRequest(req);
     sceHttpDeleteConnection(conn);
+
+    /* Treat non-2xx as failure so callers don't try to parse error bodies as
+       JSON. The status code is still exposed via net_last_status / out_status. */
+    if (result && (status_code < 200 || status_code >= 300)) {
+        free(result);
+        return NULL;
+    }
+
     return result;
 }
